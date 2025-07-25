@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Calculator, FileText } from 'lucide-react';
+import { PRICING, CUSTOMER_CONFIG, formatCurrency, getDiscountInfo, BASE_PRICING } from './config/pricing';
 
 const LaminateQuoteCalculator = () => {
   const sheetSizes = [
@@ -90,31 +91,7 @@ const LaminateQuoteCalculator = () => {
     project: ''
   });
 
-  const pricing = {
-    linearFootage: {
-      narrow: { '1': 32.80, '2': 34.32, '3': 36.25, '4': 38.51 },
-      wide: { '1': 48.83, '2': 50.72, '3': 55.65, '4': 57.21 }
-    },
-    edges: {
-      'square-wrap': 0.00,
-      'bevel-edge': 0.00,
-      'maple-bevel-edge': 40.60,
-      'self-edge': 8.75,
-      '180-underwrap': 0.00,
-      'angle-wrap': 0.00,
-      'k-nose': 0.00,
-      'post-form': 0.00,
-      'appliance': 0.00
-    },
-    splash: { 'side': 22.30 },
-    extras: {
-      template: 106.72,
-      installation: 18.33,
-      seam: 107.91, // Mitred Seam charge
-      buildup: 3.50, // Full Build-Up Standard 5/8" K-3 (no discount applied)
-      nonStandardDepth: 5.75
-    }
-  };
+  const discountInfo = getDiscountInfo();
 
   const addArea = () => {
     const newId = Math.max(...areas.map(a => a.id)) + 1;
@@ -217,40 +194,39 @@ const LaminateQuoteCalculator = () => {
     
     const selectedMaterial = stockMaterials[area.materialBrand]?.find(m => m.id === area.materialId);
     const materialLevel = selectedMaterial?.level || '1';
-    const baseRate = pricing.linearFootage[depthKey][materialLevel] || 0;
+    const baseRate = PRICING.linearFootage[depthKey][materialLevel] || 0;
     
     let subtotal = 0;
     subtotal += totalLinearFt * baseRate;
     
     const edgeLengthFt = (parseFloat(area.edgeLength) || 0) / 12;
-    subtotal += edgeLengthFt * pricing.edges[area.edgeType];
+    subtotal += edgeLengthFt * PRICING.edges[area.edgeType];
     
     const applianceEdgeFt = (parseFloat(area.applianceEdge) || 0) / 12;
-    subtotal += applianceEdgeFt * pricing.edges.appliance;
+    subtotal += applianceEdgeFt * PRICING.edges.appliance;
     
     const splashLengthFt = (parseFloat(area.splashLength) || 0) / 12;
     if (splashLengthFt > 0) {
-      subtotal += splashLengthFt * pricing.splash.side;
+      subtotal += splashLengthFt * PRICING.splash.side;
     }
     
     if (area.needsTemplate) {
-      subtotal += pricing.extras.template;
+      subtotal += PRICING.extras.template;
     }
     
     if (area.needsInstallation) {
-      subtotal += totalLinearFt * pricing.extras.installation;
+      subtotal += totalLinearFt * PRICING.extras.installation;
     }
     
     const seams = parseInt(area.seams) || 0;
-    subtotal += seams * pricing.extras.seam;
+    subtotal += seams * PRICING.extras.seam;
     
-    // Buildup charge (optional)
     if (area.needsBuildup) {
-      subtotal += totalLinearFt * pricing.extras.buildup;
+      subtotal += totalLinearFt * PRICING.extras.buildup;
     }
     
     if (!isStandardDepth) {
-      subtotal += totalLinearFt * pricing.extras.nonStandardDepth;
+      subtotal += totalLinearFt * PRICING.extras.nonStandardDepth;
     }
     
     return {
@@ -271,7 +247,7 @@ const LaminateQuoteCalculator = () => {
       total += calc.subtotal;
     });
     
-    const gst = total * 0.05;
+    const gst = total * CUSTOMER_CONFIG.gstRate;
     const finalTotal = total + gst;
     
     return { subtotal: total, gst: gst, total: finalTotal };
@@ -286,7 +262,10 @@ const LaminateQuoteCalculator = () => {
           <Calculator className="w-8 h-8" />
           Laminate Quote Calculator
         </h1>
-        <p className="mt-2 opacity-90">Get an instant quote for your laminate countertops (30% customer discount applied)</p>
+        <p className="mt-2 opacity-90">{discountInfo.displayText}</p>
+        {CUSTOMER_CONFIG.showOriginalPricing && CUSTOMER_CONFIG.discountPercentage > 0 && (
+          <p className="mt-1 text-sm opacity-80">Original prices shown with discount applied</p>
+        )}
       </div>
 
       <div className="bg-gray-50 p-6 border-x border-gray-200">
@@ -490,7 +469,9 @@ const LaminateQuoteCalculator = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Side Splash Length (inches) - $22.30 per LF</label>
+                <label className="block text-sm font-medium mb-1">
+                  Side Splash Length (inches) - {formatCurrency(PRICING.splash.side)} per LF
+                </label>
                 <input
                   type="number"
                   step="0.5"
@@ -510,7 +491,7 @@ const LaminateQuoteCalculator = () => {
                   onChange={(e) => updateArea(area.id, 'needsTemplate', e.target.checked)}
                   className="mr-2"
                 />
-                <label className="text-sm">Include Template ($106.72)</label>
+                <label className="text-sm">Include Template ({formatCurrency(PRICING.extras.template)})</label>
               </div>
               <div className="flex items-center">
                 <input
@@ -528,7 +509,7 @@ const LaminateQuoteCalculator = () => {
                   onChange={(e) => updateArea(area.id, 'needsBuildup', e.target.checked)}
                   className="mr-2"
                 />
-                <label className="text-sm">Include Buildup ($3.50/LF)</label>
+                <label className="text-sm">Include Buildup ({formatCurrency(PRICING.extras.buildup)}/LF)</label>
               </div>
             </div>
 
@@ -544,7 +525,7 @@ const LaminateQuoteCalculator = () => {
                   <div><span className="font-medium">Material:</span> {calculateArea(area).materialInfo?.name || 'Not selected'}</div>
                   <div><span className="font-medium">Level:</span> {calculateArea(area).materialInfo?.level || 'N/A'}</div>
                   <div><span className="font-medium">Finish:</span> {calculateArea(area).materialInfo?.finish || 'N/A'}</div>
-                  <div><span className="font-medium">Area Subtotal:</span> ${calculateArea(area).subtotal.toFixed(2)}</div>
+                  <div><span className="font-medium">Area Subtotal:</span> {formatCurrency(calculateArea(area).subtotal)}</div>
                 </div>
               </div>
             </div>
@@ -579,6 +560,11 @@ const LaminateQuoteCalculator = () => {
               <div><span className="font-medium">Total Pieces:</span> {areas.reduce((sum, area) => sum + area.pieces.length, 0)}</div>
               <div><span className="font-medium">Total Sq Ft:</span> {areas.reduce((sum, area) => sum + parseFloat(calculateArea(area).sqft), 0).toFixed(1)}</div>
               <div><span className="font-medium">Total Lin Ft:</span> {areas.reduce((sum, area) => sum + parseFloat(calculateArea(area).linearFt), 0).toFixed(1)}</div>
+              {CUSTOMER_CONFIG.discountPercentage > 0 && (
+                <div className="mt-2 p-2 bg-green-100 rounded">
+                  <span className="font-medium text-green-800">Discount Applied: {CUSTOMER_CONFIG.discountPercentage}%</span>
+                </div>
+              )}
             </div>
           </div>
           
@@ -591,7 +577,8 @@ const LaminateQuoteCalculator = () => {
                 const selectedMaterial = stockMaterials[area.materialBrand]?.find(m => m.id === area.materialId);
                 const materialLevel = selectedMaterial?.level || '1';
                 const depthKey = area.depthType === 'wide' ? 'wide' : 'narrow';
-                const baseRate = pricing.linearFootage[depthKey][materialLevel] || 0;
+                const baseRate = PRICING.linearFootage[depthKey][materialLevel] || 0;
+                const originalBaseRate = CUSTOMER_CONFIG.showOriginalPricing ? BASE_PRICING.linearFootage[depthKey][materialLevel] || 0 : null;
                 
                 return (
                   <div key={area.id} className="p-4 bg-white rounded border">
@@ -610,7 +597,7 @@ const LaminateQuoteCalculator = () => {
                         const pieceSqft = lengthFt * widthFt;
                         const pieceLinearFt = lengthFt;
                         const pieceBasePrice = pieceLinearFt * baseRate;
-                        const pieceBuildupPrice = area.needsBuildup ? pieceLinearFt * pricing.extras.buildup : 0;
+                        const pieceBuildupPrice = area.needsBuildup ? pieceLinearFt * PRICING.extras.buildup : 0;
                         const pieceTotal = pieceBasePrice + pieceBuildupPrice;
                         
                         return (
@@ -619,7 +606,7 @@ const LaminateQuoteCalculator = () => {
                               Piece {pieceIndex + 1}: {lengthInches}" × {widthInches}" 
                               ({pieceSqft.toFixed(1)} sq ft, {pieceLinearFt.toFixed(1)} LF)
                             </span>
-                            <span>${pieceTotal.toFixed(2)}</span>
+                            <span>{formatCurrency(pieceTotal)}</span>
                           </div>
                         );
                       })}
@@ -628,69 +615,74 @@ const LaminateQuoteCalculator = () => {
                     {/* Pricing Breakdown */}
                     <div className="text-xs space-y-1">
                       <div className="flex justify-between">
-                        <span>{areaCalc.linearFt} LF × ${baseRate.toFixed(2)} ({area.depthType} depth, Level {materialLevel}):</span>
-                        <span>${(parseFloat(areaCalc.linearFt) * baseRate).toFixed(2)}</span>
+                        <span>
+                          {areaCalc.linearFt} LF × {formatCurrency(baseRate)} ({area.depthType} depth, Level {materialLevel})
+                          {CUSTOMER_CONFIG.showOriginalPricing && originalBaseRate && (
+                            <span className="text-gray-500 line-through ml-2">{formatCurrency(originalBaseRate)}</span>
+                          )}:
+                        </span>
+                        <span>{formatCurrency(parseFloat(areaCalc.linearFt) * baseRate)}</span>
                       </div>
                       
                       {area.needsBuildup && (
                         <div className="flex justify-between">
-                          <span>{areaCalc.linearFt} LF × $3.50 (Buildup):</span>
-                          <span>${(parseFloat(areaCalc.linearFt) * pricing.extras.buildup).toFixed(2)}</span>
+                          <span>{areaCalc.linearFt} LF × {formatCurrency(PRICING.extras.buildup)} (Buildup):</span>
+                          <span>{formatCurrency(parseFloat(areaCalc.linearFt) * PRICING.extras.buildup)}</span>
                         </div>
                       )}
                       
                       {parseFloat(area.edgeLength) > 0 && (
                         <div className="flex justify-between">
-                          <span>{(parseFloat(area.edgeLength) / 12).toFixed(1)} LF × ${pricing.edges[area.edgeType].toFixed(2)} ({area.edgeType}):</span>
-                          <span>${((parseFloat(area.edgeLength) / 12) * pricing.edges[area.edgeType]).toFixed(2)}</span>
+                          <span>{(parseFloat(area.edgeLength) / 12).toFixed(1)} LF × {formatCurrency(PRICING.edges[area.edgeType])} ({area.edgeType}):</span>
+                          <span>{formatCurrency((parseFloat(area.edgeLength) / 12) * PRICING.edges[area.edgeType])}</span>
                         </div>
                       )}
                       
                       {parseFloat(area.applianceEdge) > 0 && (
                         <div className="flex justify-between">
                           <span>{(parseFloat(area.applianceEdge) / 12).toFixed(1)} LF Appliance Edge:</span>
-                          <span>${((parseFloat(area.applianceEdge) / 12) * pricing.edges.appliance).toFixed(2)}</span>
+                          <span>{formatCurrency((parseFloat(area.applianceEdge) / 12) * PRICING.edges.appliance)}</span>
                         </div>
                       )}
                       
                       {parseFloat(area.splashLength) > 0 && (
                         <div className="flex justify-between">
-                          <span>{(parseFloat(area.splashLength) / 12).toFixed(1)} LF × $22.30 (Side Splash):</span>
-                          <span>${((parseFloat(area.splashLength) / 12) * pricing.splash.side).toFixed(2)}</span>
+                          <span>{(parseFloat(area.splashLength) / 12).toFixed(1)} LF × {formatCurrency(PRICING.splash.side)} (Side Splash):</span>
+                          <span>{formatCurrency((parseFloat(area.splashLength) / 12) * PRICING.splash.side)}</span>
                         </div>
                       )}
                       
                       {parseInt(area.seams) > 0 && (
                         <div className="flex justify-between">
                           <span>{area.seams} × Seam:</span>
-                          <span>${(parseInt(area.seams) * pricing.extras.seam).toFixed(2)}</span>
+                          <span>{formatCurrency(parseInt(area.seams) * PRICING.extras.seam)}</span>
                         </div>
                       )}
                       
                       {area.needsTemplate && (
                         <div className="flex justify-between">
                           <span>Template:</span>
-                          <span>${pricing.extras.template.toFixed(2)}</span>
+                          <span>{formatCurrency(PRICING.extras.template)}</span>
                         </div>
                       )}
                       
                       {area.needsInstallation && (
                         <div className="flex justify-between">
-                          <span>{areaCalc.linearFt} LF × $18.33 (Installation):</span>
-                          <span>${(parseFloat(areaCalc.linearFt) * pricing.extras.installation).toFixed(2)}</span>
+                          <span>{areaCalc.linearFt} LF × {formatCurrency(PRICING.extras.installation)} (Installation):</span>
+                          <span>{formatCurrency(parseFloat(areaCalc.linearFt) * PRICING.extras.installation)}</span>
                         </div>
                       )}
                       
                       {!areaCalc.isStandardDepth && (
                         <div className="flex justify-between text-red-600">
-                          <span>{areaCalc.linearFt} LF × $5.75 (Non-Standard Depth):</span>
-                          <span>${(parseFloat(areaCalc.linearFt) * pricing.extras.nonStandardDepth).toFixed(2)}</span>
+                          <span>{areaCalc.linearFt} LF × {formatCurrency(PRICING.extras.nonStandardDepth)} (Non-Standard Depth):</span>
+                          <span>{formatCurrency(parseFloat(areaCalc.linearFt) * PRICING.extras.nonStandardDepth)}</span>
                         </div>
                       )}
                       
                       <div className="border-t pt-1 flex justify-between font-medium">
                         <span>Area Subtotal:</span>
-                        <span>${areaCalc.subtotal.toFixed(2)}</span>
+                        <span>{formatCurrency(areaCalc.subtotal)}</span>
                       </div>
                     </div>
                   </div>
@@ -708,15 +700,15 @@ const LaminateQuoteCalculator = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>${totals.subtotal.toFixed(2)}</span>
+                <span>{formatCurrency(totals.subtotal)}</span>
               </div>
               <div className="flex justify-between">
-                <span>GST (5%):</span>
-                <span>${totals.gst.toFixed(2)}</span>
+                <span>GST ({(CUSTOMER_CONFIG.gstRate * 100).toFixed(0)}%):</span>
+                <span>{formatCurrency(totals.gst)}</span>
               </div>
               <div className="border-t pt-2 flex justify-between text-lg font-bold">
                 <span>Total Price:</span>
-                <span>${totals.total.toFixed(2)}</span>
+                <span>{formatCurrency(totals.total)}</span>
               </div>
             </div>
           </div>
