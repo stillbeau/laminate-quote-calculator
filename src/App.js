@@ -3,22 +3,6 @@ import { Plus, Trash2, Calculator, FileText } from 'lucide-react';
 import { PRICING, CUSTOMER_CONFIG, formatCurrency, getDiscountInfo, BASE_PRICING } from './config/pricing';
 
 const LaminateQuoteCalculator = () => {
-  const sheetSizes = [
-    { width: 30, length: 144, name: '30x144' },
-    { width: 60, length: 144, name: '60x144' },
-    { width: 50, length: 120, name: '50x120' },
-    { width: 48, length: 96, name: '48x96' },
-    { width: 30, length: 96, name: '30x96' },
-    { width: 36, length: 144, name: '36x144' },
-    { width: 48, length: 120, name: '48x120' },
-    { width: 48, length: 144, name: '48x144' },
-    { width: 60, length: 96, name: '60x96' },
-    { width: 60, length: 120, name: '60x120' },
-    { width: 60, length: 108, name: '60x108' },
-    { width: 36, length: 96, name: '36x96' },
-    { width: 30, length: 48, name: '30x48' },
-    { width: 30, length: 72, name: '30x72' }
-  ];
 
   const stockMaterials = {
     'Wilsonart': [
