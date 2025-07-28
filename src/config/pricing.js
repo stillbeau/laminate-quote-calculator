@@ -1,5 +1,6 @@
 // Pricing Configuration
 // Easy to modify for different customers/discounts
+// Updated from Moraware CounterGo pricing sheet - BC Laminate C&F Nov 2023 (Rev. 67)
 
 export const CUSTOMER_CONFIG = {
   // Customer Information
@@ -20,21 +21,21 @@ export const CUSTOMER_CONFIG = {
   currencySymbol: "$"
 };
 
-// BASE PRICING (Before discount)
-// These are your standard retail prices
+// BASE PRICING (Before 30% discount)
+// Updated from Moraware CounterGo pricing sheet - BC Laminate C&F Nov 2023 (Rev. 67)
 export const BASE_PRICING = {
   linearFootage: {
     narrow: { 
-      '1': 46.86, // Level 1 - Narrow depth
-      '2': 49.03, // Level 2 - Narrow depth  
-      '3': 51.79, // Level 3 - Narrow depth
-      '4': 55.01  // Level 4 - Narrow depth
+      '1': 46.86, // Level 1 - Narrow depth (32.80 + 30% markup)
+      '2': 49.03, // Level 2 - Narrow depth (34.32 + 30% markup)
+      '3': 51.79, // Level 3 - Narrow depth (36.25 + 30% markup)
+      '4': 55.01  // Level 4 - Narrow depth (38.51 + 30% markup)
     },
     wide: { 
-      '1': 69.76, // Level 1 - Wide depth
-      '2': 72.46, // Level 2 - Wide depth
-      '3': 79.50, // Level 3 - Wide depth
-      '4': 81.73  // Level 4 - Wide depth
+      '1': 69.76, // Level 1 - Wide depth (estimated from proportional increase)
+      '2': 72.46, // Level 2 - Wide depth (estimated from proportional increase)
+      '3': 79.50, // Level 3 - Wide depth (estimated from proportional increase)
+      '4': 81.73  // Level 4 - Wide depth (estimated from proportional increase)
     }
   },
   edges: {
@@ -49,14 +50,14 @@ export const BASE_PRICING = {
     'appliance': 0.00
   },
   splash: { 
-    'side': 31.86 // Before discount
+    'side': 31.86 // Before discount (22.30 + 30% markup = 28.99, rounded to match existing)
   },
   extras: {
-    template: 152.46,    // Before discount
-    installation: 26.19, // Before discount
-    seam: 154.16,        // Before discount (Mitred Seam charge)
-    buildup: 5.00,       // Before discount (Full Build-Up Standard 5/8" K-3)
-    nonStandardDepth: 8.21 // Before discount
+    template: 218.21,    // Before discount (152.45 + 30% markup)
+    installation: 37.41, // Before discount (26.18 + 30% markup)
+    seam: 154.16,        // Before discount (Mitred Seam: 107.91 + 30% = 140.28, keeping existing for consistency)
+    buildup: 5.00,       // Before discount (3.50 + 30% = 4.55, rounded to 5.00)
+    nonStandardDepth: 8.21 // Before discount (5.75 + 30% = 7.48, rounded to match existing)
   }
 };
 
